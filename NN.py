@@ -1,43 +1,7 @@
 import numpy as np
 from sklearn.datasets import load_digits
-
-
-# -----------------------------
-# Utility functions
-# -----------------------------
-
-def train_val_test_split(X, y, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, seed=42):
-    """
-    Manual implementation of train/val/test split.
-    """
-    assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-8
-
-    rng = np.random.default_rng(seed)
-    n_samples = X.shape[0]
-    indices = np.arange(n_samples)
-    rng.shuffle(indices)
-
-    train_end = int(train_ratio * n_samples)
-    val_end = train_end + int(val_ratio * n_samples)
-
-    train_idx = indices[:train_end]
-    val_idx = indices[train_end:val_end]
-    test_idx = indices[val_end:]
-
-    return (X[train_idx], y[train_idx],
-            X[val_idx], y[val_idx],
-            X[test_idx], y[test_idx])
-
-
-def one_hot_encode(y, num_classes):
-    """
-    y: (N,) integer labels
-    returns: (N, num_classes) one-hot matrix
-    """
-    N = y.shape[0]
-    y_one_hot = np.zeros((N, num_classes), dtype=np.float32)
-    y_one_hot[np.arange(N), y] = 1.0
-    return y_one_hot
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 
 # -----------------------------
@@ -233,23 +197,33 @@ def main():
     y = digits.target      # (N,)
     class_names = digits.target_names
 
-    # 2) Preprocessing / cleaning
+    # 2) Preprocessing / cleaning using sklearn
     # Flatten images: (N, 8, 8) -> (N, 64)
     X = X.reshape(X.shape[0], -1).astype(np.float32)
 
-    # Normalize to [0, 1]
-    X /= 16.0  # pixels are 0..16 in this dataset
+    # Split into train / val / test using sklearn
+    # 20% test, then from remaining 80% take 25% as val => 60/20/20
+    X_temp, X_test, y_temp, y_test_int = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    X_train, X_val, y_train_int, y_val_int = train_test_split(
+        X_temp, y_temp, test_size=0.25, random_state=42, stratify=y_temp
+    )
 
-    # 3) Split into train/validation/test
-    X_train, y_train_int, X_val, y_val_int, X_test, y_test_int = train_val_test_split(X, y)
+    # Scale features to [0,1] using MinMaxScaler
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_val = scaler.transform(X_val)
+    X_test = scaler.transform(X_test)
 
-    num_classes = len(np.unique(y))
-    y_train = one_hot_encode(y_train_int, num_classes)
-    y_val = one_hot_encode(y_val_int, num_classes)
-    y_test = one_hot_encode(y_test_int, num_classes)
+    # One-hot encode labels with sklearn
+    enc = OneHotEncoder(sparse=False)
+    y_train = enc.fit_transform(y_train_int.reshape(-1, 1))
+    y_val = enc.transform(y_val_int.reshape(-1, 1))
+    y_test = enc.transform(y_test_int.reshape(-1, 1))
 
-    input_dim = X.shape[1]
-    output_dim = num_classes
+    input_dim = X_train.shape[1]
+    output_dim = y_train.shape[1]
 
     # 4) Ask user for network architecture
     print("Input dimension:", input_dim)

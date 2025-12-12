@@ -34,7 +34,7 @@ class NeuralNetwork:
 
     def _activation_derivative(self, outputj):
         if self.activation_name == "relu":
-            return (outputj > 0).astype(A.dtype)
+            return (outputj > 0).astype(outputj.dtype)
         elif self.activation_name == "sigmoid":
             return outputj * (1.0 - outputj)
 

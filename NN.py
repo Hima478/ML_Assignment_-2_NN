@@ -34,11 +34,11 @@ class NeuralNetwork:
         else:
             raise ValueError("Unsupported activation (use 'relu' or 'sigmoid')")
 
-    def _activation_derivative(self, A):
+    def _activation_derivative(self, outputj):
         if self.activation_name == "relu":
-            return (A > 0).astype(A.dtype)
+            return (outputj > 0).astype(A.dtype)
         elif self.activation_name == "sigmoid":
-            return A * (1.0 - A)
+            return outputj * (1.0 - outputj)
         else:
             raise ValueError("Unsupported activation (use 'relu' or 'sigmoid')")
 
@@ -118,9 +118,9 @@ class NeuralNetwork:
 
                 grads = self.backward(X_batch, y_batch, cache)
 
-                for l in range(1, self.num_layers + 1):
-                    self.params[f"W{l}"] -= self.learning_rate * grads[f"dW{l}"]
-                    self.params[f"b{l}"] -= self.learning_rate * grads[f"db{l}"]
+                for j in range(1, self.num_layers + 1):
+                    self.params[f"W{j}"] -= self.learning_rate * grads[f"dW{j}"]
+                    self.params[f"b{j}"] -= self.learning_rate * grads[f"db{j}"]
 
             epoch_loss /= num_batches
 

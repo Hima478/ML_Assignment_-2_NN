@@ -79,17 +79,17 @@ class NeuralNetwork:
         deltas = {}
         for j in range(self.num_layers, 0, -1):
             if j == self.num_layers:
-                delta = cache[j][1] - y_one_hot
-                deltas[j] = delta
+                deltaj = cache[j][1] - y_one_hot
+                deltas[j] = deltaj
             else:
                 Wk = self.params[f"W{j+1}"]
                 deltak = deltas[j+1]
                 outputj = cache[j][1]
-                delta = (deltak @ Wk.T) * self._activation_derivative(outputj)
-                deltas[j] = delta
-            A_prev = cache[j-1][1]
-            grads[f"dW{j}"] = (A_prev.T @ delta) / X.shape[0]
-            grads[f"db{j}"] = np.sum(delta, axis=0, keepdims=True) / X.shape[0]
+                deltaj = (deltak @ Wk.T) * self._activation_derivative(outputj)
+                deltas[j] = deltaj
+            outputi = cache[j-1][1]
+            grads[f"dW{j}"] = (outputi.T @ deltaj) / X.shape[0]
+            grads[f"db{j}"] = np.sum(deltaj, axis=0, keepdims=True) / X.shape[0]
         return grads
 
     def train(self, X_train, y_train, X_val, y_val,

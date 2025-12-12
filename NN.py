@@ -75,20 +75,22 @@ class NeuralNetwork:
 
 
     def backward(self, X, y_one_hot, cache):
-        """
-        Compute gradients of loss w.r.t. all weights and biases.
-
-        X: (N, D) input
-        y_one_hot: (N, C) targets
-        cache: list of (Z_l, A_l) from forward()
-
-        Should return a dict grads such that:
-            grads["dW1"], grads["db1"], ..., grads[f"dW{L}"], grads[f"db{L}"]
-
-        *** TODO: IMPLEMENT THIS FUNCTION ***
-        """
-        raise NotImplementedError("Backpropagation is left for the team to implement.")
-
+        grads = {}
+        deltas = {}
+        for j in range(self.num_layers, 0, -1):
+            if j == self.num_layers:
+                delta = cache[j][1] - y_one_hot
+                deltas[j] = delta
+            else:
+                Wk = self.params[f"W{j+1}"]
+                deltak = deltas[j+1]
+                outputj = cache[j][1]
+                delta = (deltak @ Wk.T) * self._activation_derivative(outputj)
+                deltas[j] = delta
+            A_prev = cache[j-1][1]
+            grads[f"dW{j}"] = (A_prev.T @ delta) / X.shape[0]
+            grads[f"db{j}"] = np.sum(delta, axis=0, keepdims=True) / X.shape[0]
+        return grads
 
     def train(self, X_train, y_train, X_val, y_val,
               num_epochs=50, batch_size=32, verbose=True):
@@ -157,7 +159,7 @@ def main():
     X_val = scaler.transform(X_val)
     X_test = scaler.transform(X_test)
 
-    enc = OneHotEncoder(sparse=False)
+    enc = OneHotEncoder(sparse_output=False)
     y_train = enc.fit_transform(y_train_int.reshape(-1, 1))
     y_val = enc.transform(y_val_int.reshape(-1, 1))
     y_test = enc.transform(y_test_int.reshape(-1, 1))
@@ -183,11 +185,11 @@ def main():
 
     nn = NeuralNetwork(layer_sizes, activation_name=activation, learning_rate=0.01)
 
-    # nn.train(X_train, y_train, X_val, y_val,
-    #          num_epochs=50, batch_size=32, verbose=True)
+    nn.train(X_train, y_train, X_val, y_val,
+            num_epochs=50, batch_size=32, verbose=True)
 
-    # test_acc = nn.accuracy(X_test, y_test_int)
-    # print("Test accuracy:", test_acc)
+    test_acc = nn.accuracy(X_test, y_test_int)
+    print("Test accuracy:", test_acc)
 
     def predict_sample(idx):
         x_sample = X_test[idx].reshape(1, -1)
@@ -195,7 +197,7 @@ def main():
         print(f"Predicted class: {pred_class} (label name: {class_names[pred_class]})")
         print(f"True class: {y_test_int[idx]}")
 
-    # predict_sample(0)
+    predict_sample(0)
 
 
 if __name__ == "__main__":

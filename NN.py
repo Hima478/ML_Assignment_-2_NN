@@ -31,16 +31,12 @@ class NeuralNetwork:
             return np.maximum(0, Z)
         elif self.activation_name == "sigmoid":
             return 1.0 / (1.0 + np.exp(-Z))
-        else:
-            raise ValueError("Unsupported activation (use 'relu' or 'sigmoid')")
 
     def _activation_derivative(self, outputj):
         if self.activation_name == "relu":
             return (outputj > 0).astype(A.dtype)
         elif self.activation_name == "sigmoid":
             return outputj * (1.0 - outputj)
-        else:
-            raise ValueError("Unsupported activation (use 'relu' or 'sigmoid')")
 
     def _softmax(self, Z):
         Z_shift = Z - np.max(Z, axis=1, keepdims=True)
@@ -175,10 +171,11 @@ def main():
     for i in range(num_hidden):
         h = int(input(f"Enter number of neurons in hidden layer {i + 1}: "))
         hidden_sizes.append(h)
-
-    activation = input("Enter activation function for hidden layers ('relu' or 'sigmoid'): ").strip().lower()
-    if activation not in ("relu", "sigmoid"):
-        raise ValueError("Activation must be 'relu' or 'sigmoid'")
+    while True:
+        activation = input("Enter activation function for hidden layers ('relu' or 'sigmoid'): ").strip().lower()
+        if activation in ("relu", "sigmoid"):
+            break
+        print("Activation must be 'relu' or 'sigmoid'")
 
     layer_sizes = [input_dim] + hidden_sizes + [output_dim]
     print("Network architecture:", layer_sizes)
